@@ -1,5 +1,6 @@
 node_modules
 scripts
+src
 compile.bat
 manifest.json
 package.json
