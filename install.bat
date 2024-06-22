@@ -22,11 +22,11 @@ set dataUUID=%UUID%
 call:GenUUID
 set scriptUUID=%UUID%
 
-call npm ls -g typescript > nul 2>&1
+call npm ls --save-dev -g typescript > nul 2>&1
 if %errorlevel% neq 0 (
     echo [ ⚠️ ] Not found TypeScript
     echo [ 🔽 ] Installing TypeScript . . .
-    call npm i --silent --save-dev typescript -g
+    call npm i --silent --save-dev -g typescript
     echo [ ✅ ] Installed TypeScript successfully
 ) else (
     echo [ ✅ ] TypeScript is already installed
