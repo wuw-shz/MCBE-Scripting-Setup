@@ -25,7 +25,7 @@ To use MCBE Scripting Setup, follow these steps:
 
 4. Once the setup is complete, you can start coding for your Minecraft Bedrock Edition scripting project needs.
 
-## Contributors
+## Developer
 - Github: **[wuw-shz](https://github.com/wuw-shz)**
 - Discord: **[wuw.sh](https://discord.com/users/968532080361373706)**
 - Facebook: **[wuw.shz](https://www.facebook.com/wuw.shz/)**
