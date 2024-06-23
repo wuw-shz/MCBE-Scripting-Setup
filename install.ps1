@@ -32,6 +32,7 @@ function CheckNpmInstalled {
       Write-Host "[ ✅ ] Installed $npmPackage successfully"
    }
 }
+
 function Get-Substring {
    param (
       [string]$InputString,
