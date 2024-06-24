@@ -31,3 +31,4 @@ To use MCBE Scripting Setup, follow these steps:
 - Facebook: **[wuw.shz](https://www.facebook.com/wuw.shz/)**
 - YouTube: **[wuw-sh](https://www.youtube.com/channel/UCT940bL6xp9HUJ0toiTkxrQ)**
 - Instagram: **[wuw.shz](https://www.instagram.com/wuw.shz/)**
+- Thread: **[wuw.shz](https://www.threads.net/@wuw.shz)**
