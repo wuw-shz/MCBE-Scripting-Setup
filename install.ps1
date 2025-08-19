@@ -72,11 +72,10 @@ function ConvertTo-CompactJson {
 
 $startTime = Get-Time
 
-Write-Host "[ 🚀 ] Setting up Minecraft Bedrock Scripting Project . . ."
+Write-Host "\[ 🚀 ] Setting up Minecraft Bedrock Scripting Project . . ."
 
-Write-Host "[ 🔃 ] Fetching latest modules . . ."
+Write-Host "\[ 🔃 ] Fetching latest modules . . ."
 cmd /c "npm update --silent -g npm@latest"
-cmd /c "npm install --silent -g typescript"
 
 $serverBeta = Get-BetaVersion -packageName "@minecraft/server"
 $serverUiBeta = Get-BetaVersion -packageName "@minecraft/server-ui"
@@ -89,7 +88,7 @@ CheckNpmInstalled -npmPackage "typescript" -installOptions "-g"
 CheckNpmInstalled -npmPackage "@minecraft/server@beta"
 CheckNpmInstalled -npmPackage "@minecraft/server-ui@beta"
 
-Write-Host "[ 🔧 ] Setting up project . . ."
+Write-Host "\[ 🔧 ] Setting up project . . ."
 
 if (-not (Test-Path -Path "src")) {
    New-Item -ItemType Directory -Path "src" *>$null
@@ -120,19 +119,19 @@ if (-not (Test-Path -Path "tsconfig.json")) {
    $json = $tsconfigContent | ConvertTo-Json
    $json = $json -replace '    ', ' '
    Set-Content -Path "tsconfig.json" -Value $json
-   Write-Host "[ ✅ ] Created tsconfig.json"
+   Write-Host "\[ ✅ ] Created tsconfig.json"
 }
 else {
-   Write-Host "[ ✅ ] tsconfig.json already exists"
+   Write-Host "\[ ✅ ] tsconfig.json already exists"
 }
 
 if (-not (Test-Path -Path "compile.bat")) {
    $compileContent = "@echo off`ncall tsc -w"
    Set-Content -Path "compile.bat" -Value $compileContent *>$null
-   Write-Host "[ ✅ ] Created compile.bat"
+   Write-Host "\[ ✅ ] Created compile.bat"
 }
 else {
-   Write-Host "[ ✅ ] compile.bat already exists"
+   Write-Host "\[ ✅ ] compile.bat already exists"
 }
 
 if (-not (Test-Path -Path "manifest.json")) {
@@ -153,7 +152,7 @@ if (-not (Test-Path -Path "manifest.json")) {
             "version"     = @(1, 0, 0)
          },
          [ordered]@{
-            "description" = "@minecraft/server | @minecraft/server-ui"
+            "description" = "\@minecraft/server | \@minecraft/server-ui"
             "type"        = "script"
             "language"    = "javascript"
             "uuid"        = $scriptUUID
@@ -176,18 +175,19 @@ if (-not (Test-Path -Path "manifest.json")) {
    $json = $manifestContent | ConvertTo-Json -Depth 10
    $json = $json -replace '    ', ' '
    Set-Content -Path "manifest.json" -Value $json
-   Write-Host "[ ✅ ] Created manifest.json"
+   Write-Host "\[ ✅ ] Created manifest.json"
 }
 else {
-   Write-Host "[ ✅ ] manifest.json already exists"
+   Write-Host "\[ ✅ ] manifest.json already exists"
 }
 
 if (-not (Test-Path -Path "scripts/index.js")) {
    cmd /c "tsc"
-   Write-Host "[ ✅ ] Compiled TypeScript to JavaScript"
+   Write-Host "\[ ✅ ] Compiled TypeScript to JavaScript"
 }
 
 $endTime = Get-Time
 $timeDiff = ($endTime - $startTime) / 1000
-Write-Host ("[ 🎉 ] Done in 🕑 {0:N2} secs, You can start coding now at src/index.ts" -f $timeDiff)
+Write-Host ("\[ 🎉 ] Done in {0:N2} secs, You can start coding now at src/index.ts" -f $timeDiff)
+
 Pause
