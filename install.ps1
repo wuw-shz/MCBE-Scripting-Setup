@@ -8,14 +8,6 @@ function GenerateUUID {
    return [guid]::NewGuid().ToString()
 }
 
-function Get-BetaVersion {
-   param (
-      [string]$packageName
-   )
-   $betaVersion = Get-Substring -InputString (npm show $packageName dist-tags.beta) -SearchString "beta"
-   return $betaVersion
-}
-
 function CheckNpmInstalled {
    param (
       [string]$npmPackage,
@@ -61,6 +53,14 @@ function Get-Substring {
       Write-Output "Substring '$SearchString' not found."
       return $null
    }
+}
+
+function Get-BetaVersion {
+   param (
+      [string]$packageName
+   )
+   $betaVersion = Get-Substring -InputString (npm show $packageName dist-tags.beta) -SearchString "beta"
+   return $betaVersion
 }
 
 function ConvertTo-CompactJson {
