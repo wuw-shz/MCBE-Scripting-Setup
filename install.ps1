@@ -76,7 +76,7 @@ Write-Host "[ 🚀 ] Setting up Minecraft Bedrock Scripting Project . . ."
 
 Write-Host "[ 🔃 ] Fetching latest modules . . ."
 cmd /c "npm update --silent -g npm@latest"
-cmd /c "npm install --silent -g tsc@latest"
+cmd /c "npm install --silent -g typescript"
 
 $serverBeta = Get-BetaVersion -packageName "@minecraft/server"
 $serverUiBeta = Get-BetaVersion -packageName "@minecraft/server-ui"
