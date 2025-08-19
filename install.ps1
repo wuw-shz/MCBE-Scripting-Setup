@@ -13,14 +13,14 @@ function CheckNpmInstalled {
       [string]$npmPackage,
       [string]$installOptions
    )
-   $isInstalled = -not (npm ls $installOptions --depth=0 $npmPackage 2>&1 | Select-String 'empty')
+   $isInstalled = -not (cmd /c "npm ls $installOptions --depth=0 $npmPackage 2>&1" | Select-String 'empty')
    if ($isInstalled -eq "True") {
       Write-Host "[ ✅ ] $npmPackage is already installed"
    }
    else {
       Write-Host "[ ⚠️ ] Not found $npmPackage"
       Write-Host "[ 🔽 ] Installing $npmPackage . . ."
-      npm install --silent $installOptions $npmPackage
+      cmd /c "npm install --silent $installOptions $npmPackage"
       Write-Host "[ ✅ ] Installed $npmPackage successfully"
    }
 }
@@ -81,7 +81,8 @@ $startTime = Get-Time
 Write-Host "[ 🚀 ] Setting up Minecraft Bedrock Scripting Project . . ."
 
 Write-Host "[ 🔃 ] Fetching latest modules . . ."
-npm update --silent -g npm@latest
+cmd /c "npm update --silent -g npm@latest"
+cmd /c "npm install --silent -g typescript"
 
 $serverBeta = Get-BetaVersion -packageName "@minecraft/server"
 $serverUiBeta = Get-BetaVersion -packageName "@minecraft/server-ui"
