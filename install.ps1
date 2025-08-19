@@ -31,10 +31,7 @@ function Get-Substring {
       [string]$SearchString
    )
 
-   # Initialize position
    $pos = -1
-
-   # Search for the substring
    for ($i = 0; $i -le $InputString.Length - $SearchString.Length; $i++) {
       if ($InputString.Substring($i, $SearchString.Length) -eq $SearchString) {
          $pos = $i
@@ -43,13 +40,10 @@ function Get-Substring {
    }
 
    if ($pos -ge 0) {
-      # Found the substring, calculate end position
       $endPos = $pos + $SearchString.Length
-      $result = $InputString.Substring(0, $endPos)
-      return $result
+      return $InputString.Substring(0, $endPos)
    }
    else {
-      # Substring not found
       Write-Output "Substring '$SearchString' not found."
       return $null
    }
@@ -59,7 +53,7 @@ function Get-BetaVersion {
    param (
       [string]$packageName
    )
-   $betaVersion = Get-Substring -InputString (npm show $packageName dist-tags.beta) -SearchString "beta"
+   $betaVersion = Get-Substring -InputString (cmd /c "npm show $packageName dist-tags.beta") -SearchString "beta"
    return $betaVersion
 }
 
@@ -82,7 +76,7 @@ Write-Host "[ 🚀 ] Setting up Minecraft Bedrock Scripting Project . . ."
 
 Write-Host "[ 🔃 ] Fetching latest modules . . ."
 cmd /c "npm update --silent -g npm@latest"
-cmd /c "npm install --silent -g typescript"
+cmd /c "npm install --silent -g tsc@latest"
 
 $serverBeta = Get-BetaVersion -packageName "@minecraft/server"
 $serverUiBeta = Get-BetaVersion -packageName "@minecraft/server-ui"
@@ -140,6 +134,7 @@ if (-not (Test-Path -Path "compile.bat")) {
 else {
    Write-Host "[ ✅ ] compile.bat already exists"
 }
+
 if (-not (Test-Path -Path "manifest.json")) {
    $manifestContent = [ordered]@{
       "format_version" = 2
@@ -188,7 +183,7 @@ else {
 }
 
 if (-not (Test-Path -Path "scripts/index.js")) {
-   tsc
+   cmd /c "tsc"
    Write-Host "[ ✅ ] Compiled TypeScript to JavaScript"
 }
 
