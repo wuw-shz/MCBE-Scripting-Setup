@@ -152,7 +152,7 @@ if (-not (Test-Path -Path "manifest.json")) {
             "version"     = @(1, 0, 0)
          },
          [ordered]@{
-            "description" = "\@minecraft/server | \@minecraft/server-ui"
+            "description" = "@minecraft/server | @minecraft/server-ui"
             "type"        = "script"
             "language"    = "javascript"
             "uuid"        = $scriptUUID
