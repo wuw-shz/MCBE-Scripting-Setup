@@ -20,7 +20,7 @@ To use MCBE Scripting Setup, follow these steps:
 
 3. Run the setup script:
    ```
-   ./install.bat
+   ./setup.bat
    ```
 
 4. Once the setup is complete, you can start coding for your Minecraft Bedrock Edition scripting project needs.
