@@ -98,6 +98,14 @@ CheckNpmInstalled -npmPackage "typescript" -installOptions "-g"
 
 Write-Host "[ 🔧 ] Setting up project . . ."
 
+if (-not (Test-Path -Path "package.json")) {
+   cmd /c "npm init -y --silent"
+   Write-Host "[ ✅ ] Created package.json"
+}
+else {
+   Write-Host "[ ✅ ] package.json already exists"
+}
+
 cmd /c "npm pkg set 'dependencies.@minecraftt/server=beta'"
 cmd /c "npm pkg set 'dependencies.@minecraft/server-ui=beta'"
 cmd /c "npm pkg set 'devDependencies.typescript=*'"
