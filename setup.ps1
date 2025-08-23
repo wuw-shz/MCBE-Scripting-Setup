@@ -93,10 +93,19 @@ $dataUUID = GenerateUUID
 $scriptUUID = GenerateUUID
 
 CheckNpmInstalled -npmPackage "typescript" -installOptions "-g"
-CheckNpmInstalled -npmPackage "@minecraft/server-ui@beta"
-CheckNpmInstalled -npmPackage "@minecraft/server@beta"
+# CheckNpmInstalled -npmPackage "@minecraft/server-ui@beta"
+# CheckNpmInstalled -npmPackage "@minecraft/server@beta"
 
 Write-Host "[ 🔧 ] Setting up project . . ."
+
+cmd /c "npm pkg set 'dependencies.@minecraftt/server=beta'"
+cmd /c "npm pkg set 'dependencies.@minecraft/server-ui=beta'"
+cmd /c "npm pkg set 'devDependencies.typescript=*'"
+cmd /c "npm pkg set 'overrides.@minecraft/server-ui.@minecraft/server=beta'"
+
+Write-Host "[ 🔽 ] Installing dependencies . . ."
+cmd /c "npm install --silent"
+Write-Host "[ ✅ ] Installed dependencies successfully"
 
 if (-not (Test-Path -Path "src")) {
    New-Item -ItemType Directory -Path "src" *>$null
