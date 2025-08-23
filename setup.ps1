@@ -18,7 +18,7 @@ function CheckNpmInstalled {
       Write-Host "[ ✅ ] $npmPackage is already installed"
    }
    else {
-      Write-Host "[ ⚠️ ] Not found $npmPackage"
+      # Write-Host "[ ⚠️ ] Not found $npmPackage"
       Write-Host "[ 🔽 ] Installing $npmPackage . . ."
       cmd /c "npm install --silent $installOptions $npmPackage"
       Write-Host "[ ✅ ] Installed $npmPackage successfully"
