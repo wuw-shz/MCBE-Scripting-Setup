@@ -68,10 +68,6 @@ function ConvertTo-CompactJson {
    }
 }
 
-# Main script starts here
-
-$startTime = Get-Time
-
 $folderName = Read-Host "Enter the folder name for your project"
 if (-not (Test-Path -Path $folderName)) {
    New-Item -ItemType Directory -Path $folderName *>$null
@@ -79,6 +75,8 @@ if (-not (Test-Path -Path $folderName)) {
 } else {
    Write-Host "[ ✅ ] Folder already exists: $folderName"
 }
+
+$startTime = Get-Time
 
 Set-Location -Path $folderName
 
@@ -149,7 +147,7 @@ if (-not (Test-Path -Path "manifest.json")) {
       "format_version" = 2
       "header"         = [ordered]@{
          "name"               = $folderName
-         "description"        = "Description"
+         "description"        = $folderName
          "uuid"               = $headerUUID
          "version"            = @(1, 0, 0)
          "min_engine_version" = @(1, 21, 0)
