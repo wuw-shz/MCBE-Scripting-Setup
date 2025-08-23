@@ -84,6 +84,16 @@ $headerUUID = GenerateUUID
 $dataUUID = GenerateUUID
 $scriptUUID = GenerateUUID
 
+$folderName = Read-Host "Enter the folder name for your project"
+if (-not (Test-Path -Path $folderName)) {
+   New-Item -ItemType Directory -Path $folderName *>$null
+   Write-Host "[ ✅ ] Created folder: $folderName"
+} else {
+   Write-Host "[ ✅ ] Folder already exists: $folderName"
+}
+
+Set-Location -Path $folderName
+
 CheckNpmInstalled -npmPackage "typescript" -installOptions "-g"
 CheckNpmInstalled -npmPackage "@minecraft/server@beta"
 CheckNpmInstalled -npmPackage "@minecraft/server-ui@beta"
