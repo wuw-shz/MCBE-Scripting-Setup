@@ -148,7 +148,7 @@ if (-not (Test-Path -Path "manifest.json")) {
    $manifestContent = [ordered]@{
       "format_version" = 2
       "header"         = [ordered]@{
-         "name"               = "Name"
+         "name"               = $folderName
          "description"        = "Description"
          "uuid"               = $headerUUID
          "version"            = @(1, 0, 0)
