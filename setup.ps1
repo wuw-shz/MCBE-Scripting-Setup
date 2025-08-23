@@ -99,7 +99,7 @@ CheckNpmInstalled -npmPackage "typescript" -installOptions "-g"
 Write-Host "[ 🔧 ] Setting up project . . ."
 
 if (-not (Test-Path -Path "package.json")) {
-   cmd /c "npm init -y --silent"
+   Set-Content -Path "package.json" -Value "{}" *>$null
    Write-Host "[ ✅ ] Created package.json"
 }
 else {
