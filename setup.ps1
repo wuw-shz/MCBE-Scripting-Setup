@@ -91,11 +91,10 @@ $serverUiBeta = Get-BetaVersion -packageName "@minecraft/server-ui"
 $headerUUID = GenerateUUID
 $dataUUID = GenerateUUID
 $scriptUUID = GenerateUUID
-Write-Host $serverBeta
-Write-Host $serverUiBeta
+
 CheckNpmInstalled -npmPackage "typescript" -installOptions "-g"
-CheckNpmInstalled -npmPackage "@minecraft/server@beta"
 CheckNpmInstalled -npmPackage "@minecraft/server-ui@beta"
+CheckNpmInstalled -npmPackage "@minecraft/server@beta"
 
 Write-Host "[ 🔧 ] Setting up project . . ."
 
