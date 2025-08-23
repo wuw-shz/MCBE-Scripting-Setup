@@ -106,6 +106,7 @@ else {
    Write-Host "[ ✅ ] package.json already exists"
 }
 
+Write-Host "[ 🔃 ] Setting package.json configurations . . ."
 cmd /c "npm pkg set 'dependencies.@minecraftt/server=beta'"
 cmd /c "npm pkg set 'dependencies.@minecraft/server-ui=beta'"
 cmd /c "npm pkg set 'devDependencies.typescript=*'"
