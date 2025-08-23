@@ -69,14 +69,15 @@ function ConvertTo-CompactJson {
 }
 
 $folderName = Read-Host "Enter the folder name for your project"
+
+$startTime = Get-Time
+
 if (-not (Test-Path -Path $folderName)) {
    New-Item -ItemType Directory -Path $folderName *>$null
    Write-Host "[ ✅ ] Created folder: $folderName"
 } else {
    Write-Host "[ ✅ ] Folder already exists: $folderName"
 }
-
-$startTime = Get-Time
 
 Set-Location -Path $folderName
 
