@@ -94,8 +94,6 @@ $dataUUID = GenerateUUID
 $scriptUUID = GenerateUUID
 
 CheckNpmInstalled -npmPackage "typescript" -installOptions "-g"
-# CheckNpmInstalled -npmPackage "@minecraft/server-ui@beta"
-# CheckNpmInstalled -npmPackage "@minecraft/server@beta"
 
 Write-Host "[ 🔧 ] Setting up project . . ."
 
@@ -109,7 +107,6 @@ else {
 
 cmd /c "npm pkg set dependencies.@minecraft/server=beta"
 cmd /c "npm pkg set dependencies.@minecraft/server-ui=beta"
-cmd /c "npm pkg set devDependencies.typescript=*"
 cmd /c "npm pkg set overrides.@minecraft/server-ui.@minecraft/server=beta"
 
 Write-Host "[ 🔽 ] Installing dependencies . . ."
