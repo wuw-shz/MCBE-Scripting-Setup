@@ -104,8 +104,8 @@ function Save-Json {
       [string]$Path,
       [object]$Object
    )
-   $json = $Object | ConvertTo-Json -Depth 20
-   $formatted = node -e "console.log(JSON.stringify(JSON.parse(process.argv[1]), null, 2))" -- "$json"
+   $json = $Object | ConvertTo-Json -Depth 20 -Compress
+   $formatted = $json | node -e "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>console.log(JSON.stringify(JSON.parse(d), null, 2)))"
    Set-Content -Path $Path -Value $formatted -Encoding UTF8 -Force | Out-Null
    Write-Log "Wrote JSON: $(Split-Path -Leaf $Path)" "✅"
 }
