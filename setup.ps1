@@ -1,29 +1,83 @@
 Set-StrictMode -Version Latest
 
+# ───────────────────────────────────────────────
+# Utility Functions
+# ───────────────────────────────────────────────
+
 function Get-Time {
-   return [math]::Round(((Get-Date).ToUniversalTime().Ticks / 10000))
+   [math]::Round(((Get-Date).ToUniversalTime().Ticks / 10000))
 }
 
-function GenerateUUID {
-   return [guid]::NewGuid().ToString()
+function New-UUID {
+   [guid]::NewGuid().ToString()
 }
 
-function CheckNpmInstalled {
-   param (
-      [string]$npmPackage,
-      [string]$installOptions
+function Write-Log {
+   param(
+      [string]$Message,
+      [string]$Icon = "ℹ️"
    )
-   $isInstalled = -not (cmd /c "npm ls $installOptions --depth=0 $npmPackage 2>&1" | Select-String 'empty')
-   if ($isInstalled -eq "True") {
-      Write-Host "[ ✅ ] $npmPackage is already installed"
+   Write-Host "[ $Icon ] $Message"
+}
+
+function Invoke-CommandLine {
+   param(
+      [string]$Command,
+      [string]$ErrorMessage = "Command failed"
+   )
+   try {
+      $output = cmd /c $Command
+      if ($LASTEXITCODE -ne 0) {
+         throw "$ErrorMessage (ExitCode: $LASTEXITCODE)"
+      }
+      return $output
+   }
+   catch {
+      Write-Error $_
+      exit 1
+   }
+}
+
+function Test-NpmInstalled {
+   param (
+      [string]$Package,
+      [string]$Options = ""
+   )
+
+   $result = Invoke-CommandLine "npm list $Options --depth=0 $Package" -ErrorMessage "Failed to check $Package"
+   if ($result -match "$Package@") {
+      Write-Log "$Package is already installed" "✅"
    }
    else {
-      # Write-Host "[ ⚠️ ] Not found $npmPackage"
-      Write-Host "[ 🔽 ] Installing $npmPackage . . ."
-      cmd /c "npm install --silent $installOptions $npmPackage"
-      Write-Host "[ ✅ ] Installed $npmPackage successfully"
+      Write-Log "Installing $Package . . ." "🔽"
+      Invoke-CommandLine "npm install --silent $Options $Package" -ErrorMessage "Failed to install $Package"
+      Write-Log "Installed $Package successfully" "✅"
    }
 }
+
+function Get-Version {
+   param([string]$PackageName)
+   $json = Invoke-CommandLine "npm view $PackageName versions --json" -ErrorMessage "Failed to fetch $PackageName versions"
+   $versions = $json | ConvertFrom-Json
+   $versions | Where-Object { $_ -match '-stable$' } | Select-Object -Last 1
+}
+
+function Format-Json {
+   param(
+      [Parameter(Mandatory = $true)][object]$InputObject,
+      [int]$IndentSize = 2,
+      [int]$Depth = 10
+   )
+
+   $raw = $InputObject | ConvertTo-Json -Depth $Depth
+   $regex = [regex]'(?m)^( +)'
+   $regex.Replace($raw, {
+         param($m)
+         $levels = [int]([math]::Round($m.Value.Length / 2))
+         "".PadLeft($levels * $IndentSize)
+      })
+}
+
 
 function Get-Substring {
    param (
@@ -44,173 +98,141 @@ function Get-Substring {
       return $InputString.Substring(0, $endPos)
    }
    else {
-      Write-Output "Substring '$SearchString' not found."
       return $null
    }
 }
 
-function Get-BetaVersion {
-   param (
-      [string]$packageName
+function Test-FileExistsOrCreate {
+   param(
+      [string]$Path,
+      [string]$Content
    )
-   $betaVersion = Get-Substring -InputString (cmd /c "npm show $packageName dist-tags.beta") -SearchString "beta"
-   return $betaVersion
-}
-
-function ConvertTo-CompactJson {
-   param (
-      [Parameter(ValueFromPipeline = $true)]
-      $InputObject
-   )
-   process {
-      $json = $InputObject | ConvertTo-Json -Depth 10
-      $json -replace '(?<!\\)(\t)', ' '
+   if (-not (Test-Path $Path)) {
+      Set-Content -Path $Path -Value $Content -Encoding UTF8 -Force | Out-Null
+      Write-Log "Created $(Split-Path -Leaf $Path)" "✅"
+   }
+   else {
+      Write-Log "$(Split-Path -Leaf $Path) already exists" "✅"
    }
 }
+
+# ───────────────────────────────────────────────
+# Script Start
+# ───────────────────────────────────────────────
 
 $folderName = Read-Host "Enter the folder name for your project"
-
 $startTime = Get-Time
 
-if (-not (Test-Path -Path $folderName)) {
-   New-Item -ItemType Directory -Path $folderName *>$null
-   Write-Host "[ ✅ ] Created folder: $folderName"
-} else {
-   Write-Host "[ ✅ ] Folder already exists: $folderName"
-}
+Write-Log "Setting up Minecraft Bedrock Scripting Project . . ." "🚀"
 
+if (-not (Test-Path $folderName)) {
+   New-Item -ItemType Directory -Path $folderName -Force | Out-Null
+   Write-Log "Created folder: $folderName" "✅"
+}
+else {
+   Write-Log "Folder already exists: $folderName" "✅"
+}
 Set-Location -Path $folderName
 
-Write-Host "[ 🚀 ] Setting up Minecraft Bedrock Scripting Project . . ."
+$serverLatest = Get-Version "@minecraft/server"
+$serverUiLatest = Get-Version "@minecraft/server-ui"
 
-Write-Host "[ 🔃 ] Fetching latest modules . . ."
-cmd /c "npm update --silent -g npm@latest"
+$headerUUID = New-UUID
+$dataUUID = New-UUID
+$scriptUUID = New-UUID
 
-$serverBeta = Get-BetaVersion -packageName "@minecraft/server"
-$serverUiBeta = Get-BetaVersion -packageName "@minecraft/server-ui"
+Test-NpmInstalled -Package "typescript" -Options "-g"
 
-$headerUUID = GenerateUUID
-$dataUUID = GenerateUUID
-$scriptUUID = GenerateUUID
+Test-FileExistsOrCreate "package.json" "{}"
 
-CheckNpmInstalled -npmPackage "typescript" -installOptions "-g"
+Invoke-CommandLine "npm pkg set dependencies.@minecraft/server=$serverLatest"
+Invoke-CommandLine "npm pkg set dependencies.@minecraft/server-ui=$serverUiLatest"
+Invoke-CommandLine "npm pkg set overrides.@minecraft/server-ui.@minecraft/server=$serverLatest"
 
-Write-Host "[ 🔧 ] Setting up project . . ."
+Write-Log "Installing dependencies . . ." "🔽"
+Invoke-CommandLine "npm install --silent" -ErrorMessage "Failed to install dependencies"
+Write-Log "Installed dependencies successfully" "✅"
 
-if (-not (Test-Path -Path "package.json")) {
-   Set-Content -Path "package.json" -Value "{}" *>$null
-   Write-Host "[ ✅ ] Created package.json"
+# ───────────────────────────────────────────────
+# Project Scaffolding
+# ───────────────────────────────────────────────
+
+if (-not (Test-Path "src")) {
+   New-Item -ItemType Directory -Path "src" -Force | Out-Null
 }
-else {
-   Write-Host "[ ✅ ] package.json already exists"
-}
+Test-FileExistsOrCreate "src/index.ts" ""
 
-cmd /c "npm pkg set dependencies.@minecraft/server=beta"
-cmd /c "npm pkg set dependencies.@minecraft/server-ui=beta"
-cmd /c "npm pkg set overrides.@minecraft/server-ui.@minecraft/server=beta"
-
-Write-Host "[ 🔽 ] Installing dependencies . . ."
-cmd /c "npm install --silent"
-Write-Host "[ ✅ ] Installed dependencies successfully"
-
-if (-not (Test-Path -Path "src")) {
-   New-Item -ItemType Directory -Path "src" *>$null
-}
-
-if (-not (Test-Path -Path "src/index.ts")) {
-   New-Item -ItemType File -Path "src/index.ts" *>$null
-}
-
-if (-not (Test-Path -Path "tsconfig.json")) {
-   $tsconfigContent = [ordered]@{
-      "compilerOptions" = [ordered]@{
-         "module"                       = "ES2020"
-         "moduleResolution"             = "node"
-         "target"                       = "ES2021"
-         "lib"                          = @("ES2020", "DOM")
-         "allowSyntheticDefaultImports" = $true
-         "noImplicitAny"                = $true
-         "preserveConstEnums"           = $true
-         "sourceMap"                    = $false
-         "outDir"                       = "./scripts"
-         "allowJs"                      = $true
-         "rootDir"                      = "src"
-         "baseUrl"                      = "./src"
-      }
-      "include"         = @("./src")
+$tsconfig = [ordered]@{
+   compilerOptions = [ordered]@{
+      module                       = "ES2020"
+      moduleResolution             = "node"
+      target                       = "ES2021"
+      lib                          = @("ES2020", "DOM")
+      allowSyntheticDefaultImports = $true
+      noImplicitAny                = $true
+      preserveConstEnums           = $true
+      sourceMap                    = $false
+      outDir                       = "./scripts"
+      allowJs                      = $true
+      rootDir                      = "src"
+      baseUrl                      = "./src"
    }
-   $json = $tsconfigContent | ConvertTo-Json
-   $json = $json -replace '    ', ' '
-   Set-Content -Path "tsconfig.json" -Value $json
-   Write-Host "[ ✅ ] Created tsconfig.json"
+   include         = @("./src")
 }
-else {
-   Write-Host "[ ✅ ] tsconfig.json already exists"
-}
+Test-FileExistsOrCreate "tsconfig.json" (Format-Json -InputObject $tsconfig)
 
-if (-not (Test-Path -Path "compile.bat")) {
-   $compileContent = "@echo off`ncall tsc -w"
-   Set-Content -Path "compile.bat" -Value $compileContent *>$null
-   Write-Host "[ ✅ ] Created compile.bat"
-}
-else {
-   Write-Host "[ ✅ ] compile.bat already exists"
-}
+Test-FileExistsOrCreate "compile.bat" "@echo off`ncall tsc -w"
 
-if (-not (Test-Path -Path "manifest.json")) {
-   $manifestContent = [ordered]@{
-      "format_version" = 2
-      "header"         = [ordered]@{
-         "name"               = $folderName
-         "description"        = $folderName
-         "uuid"               = $headerUUID
-         "version"            = @(1, 0, 0)
-         "min_engine_version" = @(1, 21, 0)
-      }
-      "modules"        = @(
-         [ordered]@{
-            "description" = "Item And Entity Definitions"
-            "type"        = "data"
-            "uuid"        = $dataUUID
-            "version"     = @(1, 0, 0)
-         },
-         [ordered]@{
-            "description" = "@minecraft/server | @minecraft/server-ui"
-            "type"        = "script"
-            "language"    = "javascript"
-            "uuid"        = $scriptUUID
-            "version"     = @(1, 0, 0)
-            "entry"       = "scripts/index.js"
-         }
-      )
-      "capabilities"   = @("script_eval")
-      "dependencies"   = @(
-         [ordered]@{
-            "module_name" = "@minecraft/server"
-            "version"     = $serverBeta
-         },
-         [ordered]@{
-            "module_name" = "@minecraft/server-ui"
-            "version"     = $serverUiBeta
-         }
-      )
+$manifest = [ordered]@{
+   format_version = 2
+   header         = [ordered]@{
+      name               = $folderName
+      description        = $folderName
+      uuid               = $headerUUID
+      version            = @(1, 0, 0)
+      min_engine_version = @(1, 21, 0)
    }
-   $json = $manifestContent | ConvertTo-Json -Depth 10
-   $json = $json -replace '    ', ' '
-   Set-Content -Path "manifest.json" -Value $json
-   Write-Host "[ ✅ ] Created manifest.json"
+   modules        = @(
+      [ordered]@{
+         description = "Item And Entity Definitions"
+         type        = "data"
+         uuid        = $dataUUID
+         version     = @(1, 0, 0)
+      },
+      [ordered]@{
+         description = "@minecraft/server | @minecraft/server-ui"
+         type        = "script"
+         language    = "javascript"
+         uuid        = $scriptUUID
+         version     = @(1, 0, 0)
+         entry       = "scripts/index.js"
+      }
+   )
+   capabilities   = @("script_eval")
+   dependencies   = @(
+      [ordered]@{
+         module_name = "@minecraft/server"
+         version     = (Get-Substring -InputString $serverLatest -SearchString "beta")
+      },
+      [ordered]@{
+         module_name = "@minecraft/server-ui"
+         version     = (Get-Substring -InputString $serverUiLatest -SearchString "beta")
+      }
+   )
 }
-else {
-   Write-Host "[ ✅ ] manifest.json already exists"
-}
+Test-FileExistsOrCreate "manifest.json" (Format-Json -InputObject $manifest)
 
-if (-not (Test-Path -Path "scripts/index.js")) {
-   cmd /c "tsc"
-   Write-Host "[ ✅ ] Compiled TypeScript to JavaScript"
-}
+# ───────────────────────────────────────────────
+# Build
+# ───────────────────────────────────────────────
+
+Invoke-CommandLine "tsc" -ErrorMessage "TypeScript compilation failed"
+Write-Log "Compiled TypeScript to JavaScript" "✅"
+
+Set-Location -Path ".."
 
 $endTime = Get-Time
 $timeDiff = ($endTime - $startTime) / 1000
-Write-Host ("[ 🎉 ] Done in {0:N2} secs, You can start coding now at src/index.ts" -f $timeDiff)
+Write-Log ("Done in {0:N2} secs, You can start coding now at src/index.ts" -f $timeDiff) "🎉"
 
 Pause
