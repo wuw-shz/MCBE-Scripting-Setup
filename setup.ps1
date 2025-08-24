@@ -118,7 +118,7 @@ if (-not (Test-Path -Path "src")) {
 }
 
 if (-not (Test-Path -Path "src/index.ts")) {
-   New-Item -ItemType File -Path "src/index.ts" -Value "// index.ts" *>$null
+   New-Item -ItemType File -Path "src/index.ts" *>$null
 }
 
 if (-not (Test-Path -Path "tsconfig.json")) {
