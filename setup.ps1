@@ -62,23 +62,6 @@ function Get-Version {
    $versions | Where-Object { $_ -match '-stable$' } | Select-Object -Last 1
 }
 
-function Format-Json {
-   param(
-      [Parameter(Mandatory = $true)][object]$InputObject,
-      [int]$IndentSize = 2,
-      [int]$Depth = 10
-   )
-
-   $raw = $InputObject | ConvertTo-Json -Depth $Depth
-   $regex = [regex]'(?m)^( +)'
-   $regex.Replace($raw, {
-         param($m)
-         $levels = [int]([math]::Round($m.Value.Length / 2))
-         "".PadLeft($levels * $IndentSize)
-      })
-}
-
-
 function Get-Substring {
    param (
       [string]$InputString,
@@ -114,6 +97,17 @@ function Test-FileExistsOrCreate {
    else {
       Write-Log "$(Split-Path -Leaf $Path) already exists" "✅"
    }
+}
+
+function Save-Json {
+   param(
+      [string]$Path,
+      [object]$Object
+   )
+   $json = $Object | ConvertTo-Json -Depth 20
+   $formatted = node -e "console.log(JSON.stringify(JSON.parse(process.argv[1]), null, 2))" -- "$json"
+   Set-Content -Path $Path -Value $formatted -Encoding UTF8 -Force | Out-Null
+   Write-Log "Wrote JSON: $(Split-Path -Leaf $Path)" "✅"
 }
 
 # ───────────────────────────────────────────────
@@ -179,7 +173,7 @@ $tsconfig = [ordered]@{
    }
    include         = @("./src")
 }
-Test-FileExistsOrCreate "tsconfig.json" (Format-Json -InputObject $tsconfig)
+Save-Json "tsconfig.json" $tsconfig
 
 Test-FileExistsOrCreate "compile.bat" "@echo off`ncall tsc -w"
 
@@ -220,7 +214,7 @@ $manifest = [ordered]@{
       }
    )
 }
-Test-FileExistsOrCreate "manifest.json" (Format-Json -InputObject $manifest)
+Save-Json "manifest.json" $manifest
 
 # ───────────────────────────────────────────────
 # Build
