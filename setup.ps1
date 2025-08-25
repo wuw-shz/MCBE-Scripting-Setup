@@ -64,10 +64,10 @@ function Get-Version {
    param([string]$PackageName)
 
    $version = bun -e @"
-      const { execSync } = require("child_process");
-      const json = execSync("npm view $PackageName versions --json", { encoding: "utf8" });
+      const { execSync } = require('child_process');
+      const json = execSync('npm view $PackageName versions --json', { encoding: 'utf8' });
       const versions = JSON.parse(json);
-      const stable = versions.filter(v => v.endsWith("-stable")).at(-1);
+      const stable = versions.filter(v => v.endsWith('-stable')).at(-1);
       console.log(stable ?? versions.at(-1));
 "@
 
