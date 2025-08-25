@@ -4,14 +4,6 @@ Set-StrictMode -Version Latest
 # Utility Functions
 # ───────────────────────────────────────────────
 
-function Get-Time {
-   [math]::Round(((Get-Date).ToUniversalTime().Ticks / 10000))
-}
-
-function New-UUID {
-   [guid]::NewGuid().ToString()
-}
-
 function Write-Log {
    param(
       [string]$Message,
@@ -48,6 +40,7 @@ function Test-BunInstalled {
       Write-Log "Installed Bun successfully" "✅"
    }
 }
+
 function Test-TscInstalled {
    if (Get-Command tsc -ErrorAction SilentlyContinue) {
       Write-Log "TypeScript is already installed" "✅"
@@ -59,11 +52,26 @@ function Test-TscInstalled {
    }
 }
 
+function Get-Time {
+   [math]::Round(((Get-Date).ToUniversalTime().Ticks / 10000))
+}
+
+function New-UUID {
+   [guid]::NewGuid().ToString()
+}
+
 function Get-Version {
    param([string]$PackageName)
-   $json = Invoke-CommandLine "npm view $PackageName versions --json" -ErrorMessage "Failed to fetch $PackageName versions"
-   $versions = $json | ConvertFrom-Json
-   $versions | Where-Object { $_ -match '-stable$' } | Select-Object -Last 1
+
+   $version = bun -e @"
+      const { execSync } = require("child_process");
+      const json = execSync("npm view $PackageName versions --json", { encoding: "utf8" });
+      const versions = JSON.parse(json);
+      const stable = versions.filter(v => v.endsWith("-stable")).at(-1);
+      console.log(stable ?? versions.at(-1));
+"@
+
+   return $version.Trim()
 }
 
 function Get-Substring {
@@ -72,19 +80,17 @@ function Get-Substring {
       [string]$SearchString
    )
 
-   $pos = -1
-   for ($i = 0; $i -le $InputString.Length - $SearchString.Length; $i++) {
-      if ($InputString.Substring($i, $SearchString.Length) -eq $SearchString) {
-         $pos = $i
-         break
+   $result = bun -e @"
+      const input = '$InputString';
+      const search = '$SearchString';
+      const pos = input.indexOf(search);
+      if (pos >= 0) {
+         console.log(input.substring(0, pos + search.length));
       }
-   }
-
-   if ($pos -ge 0) {
-      $endPos = $pos + $SearchString.Length
-      return $InputString.Substring(0, $endPos)
-   }
-   else {
+"@
+   if ($result) {
+      return $result.Trim()
+   } else {
       return $null
    }
 }
@@ -95,7 +101,7 @@ function Test-FileExistsOrCreate {
       [string]$Content
    )
    if (-not (Test-Path $Path)) {
-      Set-Content -Path $Path -Value $Content -Encoding UTF8 -Force | Out-Null
+      bun -e "Bun.write('$Path', ``$Content``);"
       Write-Log "Created $(Split-Path -Leaf $Path)" "✅"
    }
    else {
@@ -108,9 +114,8 @@ function Save-Json {
       [string]$Path,
       [object]$Object
    )
-   $json = $Object | ConvertTo-Json -Depth 20 -Compress
-   $formatted = $json | node -e "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>console.log(JSON.stringify(JSON.parse(d), null, 2)))"
-   Set-Content -Path $Path -Value $formatted -Encoding utf8NoBOM -Force | Out-Null
+   $json = $Object | ConvertTo-Json -Depth 10
+   bun -e "Bun.write('$Path', JSON.stringify(JSON.parse(``$json``), null, 2));"
    Write-Log "Wrote JSON: $(Split-Path -Leaf $Path)" "✅"
 }
 
@@ -123,14 +128,8 @@ $startTime = Get-Time
 
 Write-Log "Setting up Minecraft Bedrock Scripting Project . . ." "🚀"
 
-if (-not (Test-Path $folderName)) {
-   New-Item -ItemType Directory -Path $folderName -Force | Out-Null
-   Write-Log "Created folder: $folderName" "✅"
-}
-else {
-   Write-Log "Folder already exists: $folderName" "✅"
-}
-Set-Location -Path $folderName
+Test-BunInstalled
+Test-TscInstalled
 
 $serverLatest = Get-Version "@minecraft/server"
 $serverUiLatest = Get-Version "@minecraft/server-ui"
@@ -139,10 +138,9 @@ $headerUUID = New-UUID
 $dataUUID = New-UUID
 $scriptUUID = New-UUID
 
-Test-BunInstalled
-Test-TscInstalled
+Test-FileExistsOrCreate "$folderName/package.json" "{}"
 
-Test-FileExistsOrCreate "package.json" "{}"
+Set-Location -Path $folderName
 
 bun pm pkg set scripts.build="bun run tsc"
 bun pm pkg set scripts.dev="bun run tsc --watch"
@@ -158,9 +156,6 @@ Write-Log "Installed dependencies successfully" "✅"
 # Project Scaffolding
 # ───────────────────────────────────────────────
 
-if (-not (Test-Path "src")) {
-   New-Item -ItemType Directory -Path "src" -Force | Out-Null
-}
 Test-FileExistsOrCreate "src/index.ts" ""
 
 Test-FileExistsOrCreate "compile.bat" "@echo off`ncall bun run tsc --watch"
