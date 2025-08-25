@@ -47,6 +47,10 @@ function Test-BunInstalled {
          Invoke-CommandLine "bun upgrade --silent" -ErrorMessage "Failed to upgrade Bun"
          Write-Log "Bun upgraded to $latestVersion" "✅"
       }
+      elseif (-not $latestVersion) {
+         Invoke-CommandLine "bun upgrade --silent" -ErrorMessage "Failed to upgrade Bun"
+         Write-Log "Bun upgraded (latest version unknown)" "✅"
+      }
       else {
          Write-Log "Bun is already installed ($localVersion)" "✅"
       }
