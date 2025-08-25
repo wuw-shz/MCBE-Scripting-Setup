@@ -110,7 +110,7 @@ function Save-Json {
    )
    $json = $Object | ConvertTo-Json -Depth 20 -Compress
    $formatted = $json | node -e "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>console.log(JSON.stringify(JSON.parse(d), null, 2)))"
-   Set-Content -Path $Path -Value $formatted -Encoding UTF8 -Force | Out-Null
+   Set-Content -Path $Path -Value $formatted -Encoding utf8NoBOM -Force | Out-Null
    Write-Log "Wrote JSON: $(Split-Path -Leaf $Path)" "✅"
 }
 
@@ -144,8 +144,6 @@ Test-TscInstalled
 
 Test-FileExistsOrCreate "package.json" "{}"
 
-bun pm pkg set name=$folderName
-bun pm pkg set version=1.0.0
 bun pm pkg set scripts.build="bun run tsc"
 bun pm pkg set scripts.dev="bun run tsc --watch"
 bun pm pkg set dependencies.@minecraft/server=$serverLatest
