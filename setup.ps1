@@ -63,7 +63,7 @@ function Test-TscInstalled {
       $localVersion = (tsc --version).Trim().Replace("Version ", "")
 
       try {
-         $latestVersion = (npm view typescript version).Trim()
+         $latestVersion = Invoke-RestMethod "https://registry.npmjs.org/typescript/latest" | Select-Object -ExpandProperty version
       }
       catch {
          Write-Log "Could not fetch latest TypeScript version, running upgrade anyway" "⚠️"
