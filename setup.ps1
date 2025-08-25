@@ -115,7 +115,8 @@ function Save-Json {
       [object]$Object
    )
    $json = $Object | ConvertTo-Json -Depth 10 -Compress
-   bun -e "Bun.write('$Path', JSON.stringify(JSON.parse('$json'), null, 2));"
+   $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($json))
+   bun -e "Bun.write('$Path', JSON.stringify(JSON.parse(Buffer.from('$b64','base64').toString()), null, 2));"
    Write-Log "Created $(Split-Path -Leaf $Path)" "✅"
 }
 
