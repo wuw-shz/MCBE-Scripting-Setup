@@ -32,7 +32,24 @@ function Invoke-CommandLine {
 
 function Test-BunInstalled {
    if (Get-Command bun -ErrorAction SilentlyContinue) {
-      Write-Log "Bun is already installed" "✅"
+      $localVersion = (bun --version).Trim()
+
+      try {
+         $latestVersion = (Invoke-RestMethod "https://api.github.com/repos/oven-sh/bun/releases/latest").tag_name.TrimStart("bun-v")
+      }
+      catch {
+         Write-Log "Could not fetch latest Bun version, skipping version check" "⚠️"
+         $latestVersion = $null
+      }
+
+      if ($latestVersion -and $localVersion -ne $latestVersion) {
+         Write-Log "Updating Bun from $localVersion → $latestVersion . . ." "🔄"
+         Invoke-CommandLine "bun upgrade --silent" -ErrorMessage "Failed to upgrade Bun"
+         Write-Log "Bun upgraded to $latestVersion" "✅"
+      }
+      else {
+         Write-Log "Bun is already installed ($localVersion)" "✅"
+      }
    }
    else {
       Write-Log "Installing Bun . . ." "🔽"
@@ -43,7 +60,28 @@ function Test-BunInstalled {
 
 function Test-TscInstalled {
    if (Get-Command tsc -ErrorAction SilentlyContinue) {
-      Write-Log "TypeScript is already installed" "✅"
+      $localVersion = (tsc --version).Trim().Replace("Version ", "")
+
+      try {
+         $latestVersion = (npm view typescript version).Trim()
+      }
+      catch {
+         Write-Log "Could not fetch latest TypeScript version, running upgrade anyway" "⚠️"
+         $latestVersion = $null
+      }
+
+      if ($latestVersion -and $localVersion -ne $latestVersion) {
+         Write-Log "Updating TypeScript from $localVersion → $latestVersion . . ." "🔄"
+         Invoke-CommandLine "bun install --silent --global typescript" -ErrorMessage "Failed to update TypeScript"
+         Write-Log "TypeScript upgraded to $latestVersion" "✅"
+      }
+      elseif (-not $latestVersion) {
+         Invoke-CommandLine "bun install --silent --global typescript" -ErrorMessage "Failed to update TypeScript"
+         Write-Log "TypeScript upgraded (latest version unknown)" "✅"
+      }
+      else {
+         Write-Log "TypeScript is already installed ($localVersion)" "✅"
+      }
    }
    else {
       Write-Log "Installing TypeScript . . ." "🔽"
@@ -132,8 +170,13 @@ Write-Log "Setting up Minecraft Bedrock Scripting Project . . ." "🚀"
 Test-BunInstalled
 Test-TscInstalled
 
+Write-Log "Fetching latest versions . . ." "🔍"
+
 $serverLatest = Get-Version "@minecraft/server"
+Write-Log "@minecraft/server ($serverLatest)" "⏫"
+
 $serverUiLatest = Get-Version "@minecraft/server-ui"
+Write-Log "@minecraft/server-ui ($serverUiLatest)" "⏫"
 
 $headerUUID = New-UUID
 $dataUUID = New-UUID
