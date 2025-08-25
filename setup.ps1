@@ -38,14 +38,13 @@ function Invoke-CommandLine {
    }
 }
 
-function Test-NpmInstalled {
+function Test-BunInstalled {
    param (
       [string]$Package,
       [string]$Options = ""
    )
 
-   $result = Invoke-CommandLine "npm list $Options --depth=0 $Package" -ErrorMessage "Failed to check $Package"
-   if ($result -match "$Package@") {
+   if (Get-Command bun -ErrorAction SilentlyContinue) {
       Write-Log "$Package is already installed" "✅"
    }
    else {
@@ -135,16 +134,21 @@ $headerUUID = New-UUID
 $dataUUID = New-UUID
 $scriptUUID = New-UUID
 
-Test-NpmInstalled -Package "typescript" -Options "-g"
+Test-BunInstalled -Package "bun" -Options "-g"
 
 Test-FileExistsOrCreate "package.json" "{}"
 
-Invoke-CommandLine "npm pkg set dependencies.@minecraft/server=$serverLatest"
-Invoke-CommandLine "npm pkg set dependencies.@minecraft/server-ui=$serverUiLatest"
-Invoke-CommandLine "npm pkg set overrides.@minecraft/server-ui.@minecraft/server=$serverLatest"
+bun pm pkg set name=$folderName
+bun pm pkg set version=1.0.0
+bun pm pkg set scripts.build="bun run tsc"
+bun pm pkg set scripts.dev="bun run tsc -w"
+bun pm pkg set dependencies.@minecraft/server=$serverLatest
+bun pm pkg set dependencies.@minecraft/server-ui=$serverUiLatest
+bun pm pkg set devDependencies.typescript=latest
 
 Write-Log "Installing dependencies . . ." "🔽"
-Invoke-CommandLine "npm install --silent" -ErrorMessage "Failed to install dependencies"
+Invoke-CommandLine "bun install --silent" -ErrorMessage "Failed to Bun install dependencies"
+Remove-Item '.\node_modules\@minecraft\server-ui\node_modules' -Recurse -Force -ErrorAction SilentlyContinue
 Write-Log "Installed dependencies successfully" "✅"
 
 # ───────────────────────────────────────────────
@@ -155,6 +159,8 @@ if (-not (Test-Path "src")) {
    New-Item -ItemType Directory -Path "src" -Force | Out-Null
 }
 Test-FileExistsOrCreate "src/index.ts" ""
+
+Test-FileExistsOrCreate "compile.bat" "@echo off`ncall tsc -w"
 
 $tsconfig = [ordered]@{
    compilerOptions = [ordered]@{
@@ -174,8 +180,6 @@ $tsconfig = [ordered]@{
    include         = @("./src")
 }
 Save-Json "tsconfig.json" $tsconfig
-
-Test-FileExistsOrCreate "compile.bat" "@echo off`ncall tsc -w"
 
 $manifest = [ordered]@{
    format_version = 2
@@ -220,7 +224,7 @@ Save-Json "manifest.json" $manifest
 # Build
 # ───────────────────────────────────────────────
 
-Invoke-CommandLine "tsc" -ErrorMessage "TypeScript compilation failed"
+Invoke-CommandLine "bun run tsc" -ErrorMessage "TypeScript compilation failed"
 Write-Log "Compiled TypeScript to JavaScript" "✅"
 
 Set-Location -Path ".."
