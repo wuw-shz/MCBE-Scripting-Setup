@@ -39,18 +39,23 @@ function Invoke-CommandLine {
 }
 
 function Test-BunInstalled {
-   param (
-      [string]$Package,
-      [string]$Options = ""
-   )
-
    if (Get-Command bun -ErrorAction SilentlyContinue) {
-      Write-Log "$Package is already installed" "✅"
+      Write-Log "Bun is already installed" "✅"
    }
    else {
-      Write-Log "Installing $Package . . ." "🔽"
-      Invoke-CommandLine "npm install --silent $Options $Package" -ErrorMessage "Failed to install $Package"
-      Write-Log "Installed $Package successfully" "✅"
+      Write-Log "Installing Bun . . ." "🔽"
+      Invoke-CommandLine "npm install --silent --global bun" -ErrorMessage "Failed to install Bun"
+      Write-Log "Installed Bun successfully" "✅"
+   }
+}
+function Test-TscInstalled {
+   if (Get-Command tsc -ErrorAction SilentlyContinue) {
+      Write-Log "TypeScript is already installed" "✅"
+   }
+   else {
+      Write-Log "Installing TypeScript . . ." "🔽"
+      Invoke-CommandLine "bun install --silent --global typescript" -ErrorMessage "Failed to install TypeScript"
+      Write-Log "Installed TypeScript successfully" "✅"
    }
 }
 
@@ -134,17 +139,17 @@ $headerUUID = New-UUID
 $dataUUID = New-UUID
 $scriptUUID = New-UUID
 
-Test-BunInstalled -Package "bun" -Options "-g"
+Test-BunInstalled
+Test-TscInstalled
 
 Test-FileExistsOrCreate "package.json" "{}"
 
 bun pm pkg set name=$folderName
 bun pm pkg set version=1.0.0
 bun pm pkg set scripts.build="bun run tsc"
-bun pm pkg set scripts.dev="bun run tsc -w"
+bun pm pkg set scripts.dev="bun run tsc --watch"
 bun pm pkg set dependencies.@minecraft/server=$serverLatest
 bun pm pkg set dependencies.@minecraft/server-ui=$serverUiLatest
-bun pm pkg set devDependencies.typescript=latest
 
 Write-Log "Installing dependencies . . ." "🔽"
 Invoke-CommandLine "bun install --silent" -ErrorMessage "Failed to Bun install dependencies"
@@ -160,7 +165,7 @@ if (-not (Test-Path "src")) {
 }
 Test-FileExistsOrCreate "src/index.ts" ""
 
-Test-FileExistsOrCreate "compile.bat" "@echo off`ncall tsc -w"
+Test-FileExistsOrCreate "compile.bat" "@echo off`ncall bun run tsc --watch"
 
 $tsconfig = [ordered]@{
    compilerOptions = [ordered]@{
