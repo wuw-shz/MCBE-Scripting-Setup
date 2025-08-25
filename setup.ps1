@@ -116,7 +116,7 @@ function Save-Json {
    )
    $json = $Object | ConvertTo-Json -Depth 10 -Compress
    bun -e "Bun.write('$Path', JSON.stringify(JSON.parse('$json'), null, 2));"
-   Write-Log "Wrote JSON: $(Split-Path -Leaf $Path)" "✅"
+   Write-Log "Created $(Split-Path -Leaf $Path)" "✅"
 }
 
 # ───────────────────────────────────────────────
