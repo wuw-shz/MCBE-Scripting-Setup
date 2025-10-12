@@ -62,38 +62,6 @@ function Test-BunInstalled {
    }
 }
 
-function Test-TscInstalled {
-   if (Get-Command tsc -ErrorAction SilentlyContinue) {
-      $localVersion = (tsc --version).Trim().Replace("Version ", "")
-
-      try {
-         $latestVersion = Invoke-RestMethod "https://registry.npmjs.org/typescript/latest" | Select-Object -ExpandProperty version
-      }
-      catch {
-         Write-Log "Could not fetch latest TypeScript version, running upgrade anyway" "⚠️"
-         $latestVersion = $null
-      }
-
-      if ($latestVersion -and $localVersion -ne $latestVersion) {
-         Write-Log "Updating TypeScript from $localVersion → $latestVersion . . ." "🔄"
-         Invoke-CommandLine "bun install --silent --global typescript" -ErrorMessage "Failed to update TypeScript"
-         Write-Log "TypeScript upgraded to $latestVersion" "✅"
-      }
-      elseif (-not $latestVersion) {
-         Invoke-CommandLine "bun install --silent --global typescript" -ErrorMessage "Failed to update TypeScript"
-         Write-Log "TypeScript upgraded (latest version unknown)" "✅"
-      }
-      else {
-         Write-Log "TypeScript is already installed ($localVersion)" "✅"
-      }
-   }
-   else {
-      Write-Log "Installing TypeScript . . ." "🔽"
-      Invoke-CommandLine "bun install --silent --global typescript" -ErrorMessage "Failed to install TypeScript"
-      Write-Log "Installed TypeScript successfully" "✅"
-   }
-}
-
 function Get-Time {
    [math]::Round(((Get-Date).ToUniversalTime().Ticks / 10000))
 }
@@ -172,7 +140,6 @@ $startTime = Get-Time
 Write-Log "Setting up Minecraft Bedrock Scripting Project . . ." "🚀"
 
 Test-BunInstalled
-Test-TscInstalled
 
 Write-Log "Fetching latest versions . . ." "🔍"
 
@@ -190,8 +157,8 @@ Test-FileExistsOrCreate "$folderName/package.json" "{}"
 
 Set-Location -Path $folderName
 
-bun pm pkg set scripts.build="bun run tsc"
-bun pm pkg set scripts.dev="bun run tsc --watch"
+bun pm pkg set scripts.build="bun build src/*.ts --outdir scripts --packages external --external @minecraft/server --external @minecraft/server-ui --external @minecraft/server-net --external @minecraft/server-admin"
+bun pm pkg set scripts.dev="bun --watch build src/*.ts --outdir scripts --packages external --external @minecraft/server --external @minecraft/server-ui --external @minecraft/server-net --external @minecraft/server-admin"
 bun pm pkg set dependencies.@minecraft/server=$serverLatest
 bun pm pkg set dependencies.@minecraft/server-ui=$serverUiLatest
 
@@ -206,7 +173,7 @@ Write-Log "Installed dependencies successfully" "✅"
 
 Test-FileExistsOrCreate "src/index.ts" ""
 
-Test-FileExistsOrCreate "compile.bat" "@echo off`ncall bun run tsc --watch"
+Test-FileExistsOrCreate "compile.bat" "@echo off`ncall bun run dev"
 
 $tsconfig = [ordered]@{
    compilerOptions = [ordered]@{
@@ -270,7 +237,7 @@ Save-Json "manifest.json" $manifest
 # Build
 # ───────────────────────────────────────────────
 
-Invoke-CommandLine "bun run tsc" -ErrorMessage "TypeScript compilation failed"
+Invoke-CommandLine "bun run build" -ErrorMessage "TypeScript compilation failed"
 Write-Log "Compiled TypeScript to JavaScript" "✅"
 
 Set-Location -Path ".."
